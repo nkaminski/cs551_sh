@@ -1,0 +1,8 @@
+tsh
+myint
+myspin
+mystop
+.DS_Store
+*.dSYM
+*.o
+*.d
