@@ -38,6 +38,7 @@
 extern char **environ;      /* defined in libc */
 char prompt[] = " > ";    /* command line prompt (DO NOT CHANGE) */
 char fullprompt[sizeof(prompt)+PATH_MAX];
+int strikes = 0;
 int verbose = 0;            /* if true, print additional output */
 int nextjid = 1;            /* next job ID to allocate */
 char sbuf[MAXLINE];         /* for composing sprintf messages */
@@ -58,6 +59,7 @@ struct job_t jobs[MAXJOBS]; /* The job list */
 void eval(char *cmdline);
 int builtin_cmd(char **argv);
 void do_bgfg(char **argv);
+void do_cd(char **argv);
 void waitfg(pid_t pid);
 
 void sigchld_handler(int sig);
@@ -148,6 +150,8 @@ int main(int argc, char **argv)
 
 		/* Evaluate the command line */
 		eval(cmdline);
+        /* reset control-c counter */
+        strikes=0;
 		fflush(stdout);
 		fflush(stdout);
 	} 
@@ -158,7 +162,7 @@ int main(int argc, char **argv)
 /* 
  * eval - Evaluate the command line that the user has just typed in
  * 
- * If the user has requested a built-in command (quit, jobs, bg or fg)
+ * If the user has requested a built-in command (exit, jobs, cd, bg or fg)
  * then execute it immediately. Otherwise, fork a child process and
  * run the job in the context of the child. If the job is running in
  * the foreground, wait for it to terminate and then return.  Note:
@@ -188,11 +192,14 @@ void eval(char *cmdline)
             return;
         sigemptyset (&mask);
         sigaddset (&mask, SIGCHLD);
-        if(strcmp(argv[0],"quit")==0){
+        if(strcmp(argv[0],"exit")==0){
             exit(0);
         }
         else if(strcmp(argv[0],"bg")==0 || strcmp(argv[0],"fg")==0){
             do_bgfg(argv);
+        }
+        else if(strcmp(argv[0],"cd")==0){
+            do_cd(argv);
         }
         else if(strcmp(argv[0], "kill")==0 || strcmp(argv[0],"jobs")==0){
             builtin_cmd(argv);
@@ -341,7 +348,20 @@ ok:
 
 	return;
 }
-
+/* 
+ * do_cd - Execute the builtin cd command
+ */
+void do_cd(char **argv) 
+{
+	if(argv[1]==NULL){
+		printf("%s command requires a directory path as an argument\n",argv[0]);
+		return;
+	}
+    if(chdir(argv[1]) == -1){
+        perror("Failed to change directory");
+    }
+	return;
+}
 /* 
  * waitfg - Block until process pid is no longer the foreground process
  */
@@ -398,7 +418,7 @@ void sigchld_handler(int sig)
 /* 
  * sigint_handler - The kernel sends a SIGINT to the shell whenver the
  *    user types ctrl-c at the keyboard.  Catch it and send it along
- *    to the foreground job.  
+ *    to the foreground job or prompt to quit the shell.  
  */
 void sigint_handler(int sig) 
 {
@@ -411,7 +431,12 @@ void sigint_handler(int sig)
 	//printf("int handler fgpid: %i\n",fgp);
 	if(fgp>0){
 		kill(-fgp,sig);
-	}
+	} else {
+        strikes++;
+        if(strikes==2)
+            exit(0);
+        printf("\nAre you sure? CTRL-C again to quit.\n");
+    }
 	sigprocmask(SIG_UNBLOCK,&mask,NULL);
 	return;
 }
