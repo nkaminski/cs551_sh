@@ -98,6 +98,7 @@ handler_t *Signal(int signum, handler_t *handler);
  */
 int main(int argc, char **argv)
 {
+	init_dir(); //initialize working directory
 	char c;
 	char cmdline[MAXLINE];
 	int emit_prompt = 1; /* emit prompt (default) */
@@ -162,6 +163,50 @@ int main(int argc, char **argv)
 	}
 
 	exit(0); /* control never reaches here */
+}
+
+/* Initialize Directory
+ * Sets the current working directory to the directory contained in
+ * "./.profile" if it exists.
+ * No error message if "./.profile" doesnt exist
+ * Path starts with "/"  
+ * No spaces allowed within directory path
+ * Maximum path in file is MAXLINE
+ */
+void init_dir()
+{
+	FILE *fp = fopen("./.profile","r");
+	if(fp != NULL)
+	{
+		char *buf = malloc(MAXLINE*sizeof(char));
+		fgets(buf,MAXLINE,fp);
+		fclose(fp);
+		while(*buf != '/' /*&& *buf != '~'*/ && *buf != EOF)
+		{
+			buf++;	
+		}
+		char *pstart = buf;
+		size_t size = 0;
+		while(*buf != ' ' && *buf != '\n' && *buf != EOF)	
+		{
+			buf++;
+			size++;
+		}
+		char *path = malloc(size*sizeof(char));
+		strncpy(path,pstart,size);
+
+		if(chdir(path) == -1)
+		{
+			perror(".profile");
+		}
+	}
+	/* DEBUG
+	char cwd[1024];
+   	if (getcwd(cwd, sizeof(cwd)) != NULL)
+   	    fprintf(stdout, "Current working dir: %s\n", cwd);
+   	else
+   	    perror("getcwd() error");
+	*/
 }
 
 /* resolve_path - Searches directories on the PATH for a given command
