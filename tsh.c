@@ -1,4 +1,4 @@
-/* 
+/*
  * tsh - A tiny shell program with job control
  */
 #include <stdio.h>
@@ -8,9 +8,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <signal.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <dirent.h>
 
 /* Misc manifest constants */
 #define MAXLINE    1024   /* max line size */
@@ -24,7 +26,7 @@
 #define BG 2    /* running in background */
 #define ST 3    /* stopped */
 
-/* 
+/*
  * Jobs states: FG (foreground), BG (background), ST (stopped)
  * Job state transitions and enabling actions:
  *     FG -> ST  : ctrl-z
@@ -36,7 +38,10 @@
 
 /* Global variables */
 extern char **environ;      /* defined in libc */
-char prompt[] = " > ";    /* command line prompt (DO NOT CHANGE) */
+const char prompt[] = " > ";    /* command line prompt (DO NOT CHANGE) */
+const char *path_dirs[] = {"/bin", "/usr/bin"};
+const char n_path_dirs = 2;
+
 char fullprompt[sizeof(prompt)+PATH_MAX];
 int strikes = 0;
 int verbose = 0;            /* if true, print additional output */
@@ -67,19 +72,19 @@ void sigtstp_handler(int sig);
 void sigint_handler(int sig);
 
 /* Here are helper routines that we've provided for you */
-int parseline(const char *cmdline, char **argv); 
+int parseline(const char *cmdline, char **argv);
 void sigquit_handler(int sig);
 
 void clearjob(struct job_t *job);
 void initjobs(struct job_t *jobs);
-int maxjid(struct job_t *jobs); 
+int maxjid(struct job_t *jobs);
 int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline);
-int deletejob(struct job_t *jobs, pid_t pid); 
+int deletejob(struct job_t *jobs, pid_t pid);
 pid_t fgpid(struct job_t *jobs);
 struct job_t *getjobpid(struct job_t *jobs, pid_t pid);
 struct job_t *getjobjid(struct job_t *jobs, int jid);
 struct job_t *getjobarg(struct job_t *jobs, char *arg);
-int pid2jid(pid_t pid); 
+int pid2jid(pid_t pid);
 void listjobs(struct job_t *jobs);
 
 void usage(void);
@@ -89,9 +94,9 @@ typedef void handler_t(int);
 handler_t *Signal(int signum, handler_t *handler);
 
 /*
- * main - The shell's main routine 
+ * main - The shell's main routine
  */
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 	char c;
 	char cmdline[MAXLINE];
@@ -126,7 +131,7 @@ int main(int argc, char **argv)
 	Signal(SIGCHLD, sigchld_handler);  /* Terminated or stopped child */
 
 	/* This one provides a clean way to kill the shell */
-	Signal(SIGQUIT, sigquit_handler); 
+	Signal(SIGQUIT, sigquit_handler);
 
 	/* Initialize the job list */
 	initjobs(jobs);
@@ -154,23 +159,61 @@ int main(int argc, char **argv)
         strikes=0;
 		fflush(stdout);
 		fflush(stdout);
-	} 
+	}
 
 	exit(0); /* control never reaches here */
 }
 
-/* 
+/* resolve_path - Searches directories on the PATH for a given command
+ * if the command does not include a '/'. The area pointed to by
+ * command must be at least MAXLINE long.
+ */
+int resolve_path(char *cmd){
+    int i;
+    DIR *curdir;
+    char fpath[PATH_MAX];
+    const char slashstr[] = "/";
+    struct dirent *dfp;
+    struct stat fst;
+    /* slash in path */
+    if(strchr(cmd,'/') != NULL)
+        return 0;
+    for(i=0;i<n_path_dirs;i++){
+        if((curdir = opendir(path_dirs[i])) == NULL){
+            perror("Failed to open directory on PATH");
+            return -2;
+        }
+        while((dfp = readdir(curdir)) != NULL){
+           /* see if dfp points to a regular file*/
+            strcpy(fpath, path_dirs[i]);
+            strcat(fpath,slashstr);
+            strncat(fpath, dfp->d_name, PATH_MAX-strlen(path_dirs[i])-2);
+            if(lstat(fpath, &fst) == -1){
+                perror("lstat failed during path walk");
+            }
+            if((fst.st_mode & S_IFMT) == S_IFREG){
+                /* this is a reg file, test name */
+                if(strcmp(cmd, dfp->d_name)==0){
+                    strcpy(cmd, fpath);
+                    return i;
+                }
+            }
+        }
+    }
+    return -1;
+}
+/*
  * eval - Evaluate the command line that the user has just typed in
- * 
+ *
  * If the user has requested a built-in command (exit, jobs, cd, bg or fg)
  * then execute it immediately. Otherwise, fork a child process and
  * run the job in the context of the child. If the job is running in
  * the foreground, wait for it to terminate and then return.  Note:
  * each child process must have a unique process group ID so that our
  * background children don't receive SIGINT (SIGTSTP) from the kernel
- * when we type ctrl-c (ctrl-z) at the keyboard.  
+ * when we type ctrl-c (ctrl-z) at the keyboard.
  */
-void eval(char *cmdline) 
+void eval(char *cmdline)
 {
 	int jt;
 	pid_t pid;
@@ -180,6 +223,7 @@ void eval(char *cmdline)
     char *tok_s;
     char *saveptr_s;
     char cmdcpy[MAXLINE];
+    char fqpath[PATH_MAX];
     strncpy(cmdcpy,cmdline,MAXLINE-1);
     tok_s = strtok_r(cmdcpy, ";&", &saveptr_s);
     while(tok_s != NULL){
@@ -205,12 +249,18 @@ void eval(char *cmdline)
             builtin_cmd(argv);
         }
         else{
+            strcpy(fqpath, argv[0]);
+            if(resolve_path(fqpath)<0){
+                printf("%s does not exist on PATH\n", fqpath);
+                return;
+            }
+            //printf("path resolved to %s\n", fqpath);
             sigprocmask(SIG_BLOCK,&mask,NULL);
             if((pid = fork())==0){
                 setpgrp();
                 sigprocmask(SIG_UNBLOCK,&mask,NULL);
                 //printf("child\n");
-                execve(argv[0],argv,environ);
+                execve(fqpath,argv,environ);
                 printf("%s: Command not found\n",argv[0]);
                 exit(0);
             }
@@ -231,14 +281,14 @@ void eval(char *cmdline)
     }
 }
 
-/* 
+/*
  * parseline - Parse the command line and build the argv array.
- * 
+ *
  * Characters enclosed in single quotes are treated as a single
  * argument.  Return true if the user has requested a BG job, false if
- * the user has requested a FG job.  
+ * the user has requested a FG job.
  */
-int parseline(const char *cmdline, char **argv) 
+int parseline(const char *cmdline, char **argv)
 {
     static char array[MAXLINE]; /* holds local copy of command line */
 	char *buf = array;          /* ptr that traverses command line */
@@ -291,11 +341,11 @@ int parseline(const char *cmdline, char **argv)
 	return bg;
 }
 
-/* 
+/*
  * builtin_cmd - If the user has typed a built-in command then execute
- *    it immediately.  
+ *    it immediately.
  */
-int builtin_cmd(char **argv) 
+int builtin_cmd(char **argv)
 {
 	struct job_t *jr;
 	if(strcmp(argv[0],"jobs")==0){
@@ -307,10 +357,10 @@ int builtin_cmd(char **argv)
 	return 0;     /* not a builtin command */
 }
 
-/* 
+/*
  * do_bgfg - Execute the builtin bg and fg commands
  */
-void do_bgfg(char **argv) 
+void do_bgfg(char **argv)
 {
 	struct job_t *jr;
 	if(argv[1]==NULL){
@@ -324,7 +374,7 @@ void do_bgfg(char **argv)
 		if(atoi(argv[1]+1)!=0){
 			goto ok;
 		}
-	}	
+	}
 	printf("%s: argument must be a PID or %%jobid\n",argv[0]);
 	return;
 ok:
@@ -348,10 +398,10 @@ ok:
 
 	return;
 }
-/* 
+/*
  * do_cd - Execute the builtin cd command
  */
-void do_cd(char **argv) 
+void do_cd(char **argv)
 {
 	if(argv[1]==NULL){
 		printf("%s command requires a directory path as an argument\n",argv[0]);
@@ -362,7 +412,7 @@ void do_cd(char **argv)
     }
 	return;
 }
-/* 
+/*
  * waitfg - Block until process pid is no longer the foreground process
  */
 void waitfg(pid_t pid)
@@ -383,14 +433,14 @@ void waitfg(pid_t pid)
  * Signal handlers
  *****************/
 
-/* 
+/*
  * sigchld_handler - The kernel sends a SIGCHLD to the shell whenever
  *     a child job terminates (becomes a zombie), or stops because it
  *     received a SIGSTOP or SIGTSTP signal. The handler reaps all
  *     available zombie children, but doesn't wait for any other
- *     currently running children to terminate.  
+ *     currently running children to terminate.
  */
-void sigchld_handler(int sig) 
+void sigchld_handler(int sig)
 {
 	pid_t pid;
 	int stat;
@@ -415,12 +465,12 @@ void sigchld_handler(int sig)
 	return;
 }
 
-/* 
+/*
  * sigint_handler - The kernel sends a SIGINT to the shell whenver the
  *    user types ctrl-c at the keyboard.  Catch it and send it along
- *    to the foreground job or prompt to quit the shell.  
+ *    to the foreground job or prompt to quit the shell.
  */
-void sigint_handler(int sig) 
+void sigint_handler(int sig)
 {
 	pid_t fgp;
 	sigset_t mask;
@@ -444,9 +494,9 @@ void sigint_handler(int sig)
 /*
  * sigtstp_handler - The kernel sends a SIGTSTP to the shell whenever
  *     the user types ctrl-z at the keyboard. Catch it and suspend the
- *     foreground job by sending it a SIGTSTP.  
+ *     foreground job by sending it a SIGTSTP.
  */
-void sigtstp_handler(int sig) 
+void sigtstp_handler(int sig)
 {
 	pid_t fgp;
 	struct job_t *fgj;
@@ -462,7 +512,7 @@ void sigtstp_handler(int sig)
 		while(fgj->state!=ST){
 			sleep(1);
 		}
-		
+
 	}
 	sigprocmask(SIG_UNBLOCK,&mask,NULL);
 	return;
@@ -493,7 +543,7 @@ void initjobs(struct job_t *jobs) {
 }
 
 /* maxjid - Returns largest allocated job ID */
-int maxjid(struct job_t *jobs) 
+int maxjid(struct job_t *jobs)
 {
 	int i, max=0;
 
@@ -504,7 +554,7 @@ int maxjid(struct job_t *jobs)
 }
 
 /* addjob - Add a job to the job list */
-int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline) 
+int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline)
 {
 	int i;
 
@@ -530,7 +580,7 @@ int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline)
 }
 
 /* deletejob - Delete a job whose PID=pid from the job list */
-int deletejob(struct job_t *jobs, pid_t pid) 
+int deletejob(struct job_t *jobs, pid_t pid)
 {
 	int i;
 
@@ -570,7 +620,7 @@ struct job_t *getjobpid(struct job_t *jobs, pid_t pid) {
 }
 
 /* getjobjid  - Find a job (by JID) on the job list */
-struct job_t *getjobjid(struct job_t *jobs, int jid) 
+struct job_t *getjobjid(struct job_t *jobs, int jid)
 {
 	int i;
 
@@ -605,7 +655,7 @@ struct job_t *getjobarg(struct job_t *jobs, char *arg){
 	}
 }
 /* pid2jid - Map process ID to job ID */
-int pid2jid(pid_t pid) 
+int pid2jid(pid_t pid)
 {
 	int i;
 
@@ -619,7 +669,7 @@ int pid2jid(pid_t pid)
 }
 
 /* listjobs - Print the job list */
-void listjobs(struct job_t *jobs) 
+void listjobs(struct job_t *jobs)
 {
 	int i;
 
@@ -627,17 +677,17 @@ void listjobs(struct job_t *jobs)
 		if (jobs[i].pid != 0) {
 			printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
 			switch (jobs[i].state) {
-				case BG: 
+				case BG:
 					printf("Running ");
 					break;
-				case FG: 
+				case FG:
 					printf("Foreground ");
 					break;
-				case ST: 
+				case ST:
 					printf("Stopped ");
 					break;
 				default:
-					printf("listjobs: Internal error: job[%d].state=%d ", 
+					printf("listjobs: Internal error: job[%d].state=%d ",
 							i, jobs[i].state);
 			}
 			printf("%s", jobs[i].cmdline);
@@ -656,7 +706,7 @@ void listjobs(struct job_t *jobs)
 /*
  * usage - print a help message
  */
-void usage(void) 
+void usage(void)
 {
 	printf("Usage: shell [-hvp]\n");
 	printf("   -h   print this message\n");
@@ -686,11 +736,11 @@ void app_error(char *msg)
 /*
  * Signal - wrapper for the sigaction function
  */
-handler_t *Signal(int signum, handler_t *handler) 
+handler_t *Signal(int signum, handler_t *handler)
 {
 	struct sigaction action, old_action;
 
-	action.sa_handler = handler;  
+	action.sa_handler = handler;
 	sigemptyset(&action.sa_mask); /* block sigs of type being handled */
 	action.sa_flags = SA_RESTART; /* restart syscalls if possible */
 
@@ -703,7 +753,7 @@ handler_t *Signal(int signum, handler_t *handler)
  * sigquit_handler - The driver program can gracefully terminate the
  *    child shell by sending it a SIGQUIT signal.
  */
-void sigquit_handler(int sig) 
+void sigquit_handler(int sig)
 {
 	printf("Terminating after receipt of SIGQUIT signal\n");
 	exit(1);
