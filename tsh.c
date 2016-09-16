@@ -92,6 +92,7 @@ void unix_error(char *msg);
 void app_error(char *msg);
 typedef void handler_t(int);
 handler_t *Signal(int signum, handler_t *handler);
+void init_dir();
 
 /*
  * main - The shell's main routine
