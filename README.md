@@ -4,8 +4,8 @@
 
 * Testcases - 0%
 * fork / exec - 100%
-* PROFILE execution - 0%
-* Aliases 20%
+* PROFILE execution - 100%
+* Aliases 60%
 * Command parsing - 75% (all except parenthesis)
 * PATH walking - 100%
 * Getting and setting woking directory - 100%
