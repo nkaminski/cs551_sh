@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
+#include <assert.h>
 #include <string.h>
 #include <ctype.h>
 #include <signal.h>
@@ -56,7 +57,26 @@ struct job_t {              /* The job struct */
 };
 struct job_t jobs[MAXJOBS]; /* The job list */
 /* End global variables */
+//Sentinel and list object 
 
+typedef struct dlist_obj{
+    void *payload;
+    struct dlist_obj *prev;
+    struct dlist_obj *next;
+} dlist_obj_t;
+
+typedef struct {
+    char alias_src[MAXLINE];
+    char alias_dest[MAXLINE];
+} alias_t;
+
+typedef struct {
+    int size;
+    dlist_obj_t *head;
+    dlist_obj_t *tail;
+} dlist_head_t;
+
+dlist_head_t alias_list;
 
 /* Function prototypes */
 
@@ -92,6 +112,10 @@ void unix_error(char *msg);
 void app_error(char *msg);
 typedef void handler_t(int);
 handler_t *Signal(int signum, handler_t *handler);
+
+void set_alias(char **argv);
+
+void dl_init(dlist_head_t *q);
 
 /*
  * main - The shell's main routine
@@ -163,6 +187,129 @@ int main(int argc, char **argv)
 
 	exit(0); /* control never reaches here */
 }
+void dl_init(dlist_head_t *q){
+    //sanity check
+    assert(q != NULL);
+    //initialize queue
+    q->size = 0;
+    q->head=NULL;
+    q->tail=NULL;
+}
+
+
+int dl_push(dlist_head_t *q, void* dataptr){
+    dlist_obj_t *nu_obj;
+    //push an object
+    nu_obj = (dlist_obj_t *)malloc(sizeof(dlist_obj_t));
+    if(!nu_obj)
+        return -1;
+    //Assign data pointer
+    nu_obj->payload = dataptr;
+    //New object always at head
+    nu_obj->prev = NULL;
+    //New next object is the current head
+    nu_obj->next = q->head;
+    //if > 1 item, next block's prev points to new obj
+    if(nu_obj->next)
+        (nu_obj->next)->prev = nu_obj;
+    //move head to current new object
+    q->head = nu_obj;
+    //if first item, tail points to nu_obj as well
+    if(!q->tail)
+        q->tail = nu_obj;
+    (q->size)++;
+    return q->size;
+}
+
+void* dl_pop(dlist_head_t *q){
+    dlist_obj_t *dq_obj;
+    void *retval;
+    if(!q->tail)
+        return NULL;
+    //Dequeue the last object
+    dq_obj = q->tail;
+    //Move tail pointer back one
+    q->tail = dq_obj->prev;
+    //Set new tail's next to NULL if it exists
+    if(q->tail)
+        (q->tail)->next = NULL;
+    else
+        q->head = NULL;
+    //save payload pointer and free the q node
+    retval = dq_obj->payload;
+    free(dq_obj);
+    (q->size)--;
+    return retval;
+}
+void* dl_peek(dlist_head_t *q){
+    dlist_obj_t *dq_obj;
+    void *retval;
+    if(!q->tail)
+        return NULL;
+    //access the last object
+    dq_obj = q->tail;
+    retval = dq_obj->payload;
+    return retval;
+}
+
+void* dl_remove(dlist_head_t *q, dlist_obj_t *ob){
+    void *data;
+    if(ob == NULL){
+        return NULL;
+    }
+    if(ob->prev){
+        /* Has a previous element */
+        ob->prev->next = ob->next;
+    } else {
+        /* was first element */
+        q->head = ob->next;
+    }
+    /* repeated logic as before */
+    if(ob->next){
+        ob->next->prev = ob->prev;
+    } else {
+        q->tail = ob->prev;
+    }
+    data = ob->payload;
+    free(ob);
+    return data;
+}
+
+alias_t* dl_find_alias(dlist_head_t *q, const char *tgt){
+    dlist_obj_t *curobj = q->head;
+    alias_t * al;
+    while(curobj != NULL){
+        assert(curobj->payload != NULL);
+        al = (alias_t *)curobj->payload;
+        if(strcmp(al->alias_src, tgt) == 0){
+            return al;
+        }
+        curobj=curobj->next;
+    }
+    return NULL;
+}
+int dl_find_remove_alias(dlist_head_t *q, const char *tgt){
+    dlist_obj_t *curobj = q->head;
+    alias_t * al;
+    while(curobj != NULL){
+        assert(curobj->payload != NULL);
+        al = (alias_t *)curobj->payload;
+        if(strcmp(al->alias_src, tgt) == 0){
+            free(curobj->payload);
+            dl_remove(q, curobj);
+            return 1;
+        }
+        curobj=curobj->next;
+    }
+    return 0;
+}
+
+
+void dl_empty(dlist_head_t *q){
+    //remove everything
+    while(dl_pop(q));
+}
+
 
 /* resolve_path - Searches directories on the PATH for a given command
  * if the command does not include a '/'. The area pointed to by
@@ -241,6 +388,9 @@ void eval(char *cmdline)
         }
         else if(strcmp(argv[0],"bg")==0 || strcmp(argv[0],"fg")==0){
             do_bgfg(argv);
+        }
+        else if(strcmp(argv[0],"alias")==0){
+            set_alias(argv);
         }
         else if(strcmp(argv[0],"cd")==0){
             do_cd(argv);
@@ -411,6 +561,30 @@ void do_cd(char **argv)
         perror("Failed to change directory");
     }
 	return;
+}
+/*
+ * set_alias - Set an alias
+ */
+void set_alias(char **argv)
+{
+    alias_t *nualias;
+    if(argv[1]==NULL || argv[2] == NULL){
+		printf("%s command requires an argument in the form alias aliasname ""command""\n",argv[0]);
+		return;
+	}
+    //Remove the alias if it already exists
+	dl_find_remove_alias(&alias_list, argv[1]);
+    //Allocate and populate
+    nualias = malloc(sizeof(alias_t));
+    if(nualias == NULL){
+        printf("Unable to add alias \n");
+        return;
+    }
+    strncpy(nualias->alias_src, argv[1], MAXLINE-1);
+    strncpy(nualias->alias_dest, argv[2], MAXLINE-1);
+    dl_push(&alias_list, nualias);
+    printf("\nAlias %s -> ""%s""\n", nualias->alias_src, nualias->alias_dest);
+    return;
 }
 /*
  * waitfg - Block until process pid is no longer the foreground process
