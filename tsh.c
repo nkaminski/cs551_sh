@@ -115,6 +115,7 @@ handler_t *Signal(int signum, handler_t *handler);
 void init_dir();
 
 void set_alias(char **argv);
+void print_aliases(char **argv);
 
 void dl_init(dlist_head_t *q);
 
@@ -435,6 +436,9 @@ void eval(char *cmdline)
         else if(strcmp(argv[0],"bg")==0 || strcmp(argv[0],"fg")==0){
             do_bgfg(argv);
         }
+        else if(strcmp(argv[0],"aliases")==0){
+            print_aliases(argv);
+        }
         else if(strcmp(argv[0],"alias")==0){
             set_alias(argv);
         }
@@ -615,11 +619,14 @@ void set_alias(char **argv)
 {
     alias_t *nualias;
     if(argv[1]==NULL || argv[2] == NULL){
-		printf("%s command requires an argument in the form alias aliasname ""command""\n",argv[0]);
+		printf("%s command requires an argument in the form alias aliasname \'command\'\n",argv[0]);
 		return;
 	}
     //Remove the alias if it already exists
 	dl_find_remove_alias(&alias_list, argv[1]);
+    // ! removes the alias
+    if(argv[2][0] == '!')
+        return;
     //Allocate and populate
     nualias = malloc(sizeof(alias_t));
     if(nualias == NULL){
@@ -631,6 +638,17 @@ void set_alias(char **argv)
     dl_push(&alias_list, nualias);
     printf("\nAlias %s -> ""%s""\n", nualias->alias_src, nualias->alias_dest);
     return;
+}
+
+void print_aliases(char **argv){
+    dlist_obj_t *curobj = alias_list.head;
+    alias_t * al;
+    while(curobj != NULL){
+        assert(curobj->payload != NULL);
+        al = (alias_t *)curobj->payload;
+        printf("alias %s -> \'%s\'\n",al->alias_src, al->alias_dest);
+        curobj=curobj->next;
+    }
 }
 /*
  * waitfg - Block until process pid is no longer the foreground process
