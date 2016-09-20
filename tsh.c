@@ -996,6 +996,3 @@ void sigquit_handler(int sig)
 	printf("Terminating after receipt of SIGQUIT signal\n");
 	exit(1);
 }
-
-
-
