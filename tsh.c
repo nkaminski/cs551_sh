@@ -1,5 +1,5 @@
 /*
- * tsh - A tiny shell program with job control
+ * 551_tsh - A far more advanced tiny shell program with job control
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,6 +42,7 @@ extern char **environ;      /* defined in libc */
 const char prompt[] = " > ";    /* command line prompt (DO NOT CHANGE) */
 const char *path_dirs[] = {"/bin", "/usr/bin"};
 const char n_path_dirs = 2;
+char aliasesfile[PATH_MAX];
 
 char fullprompt[sizeof(prompt)+PATH_MAX];
 int strikes = 0;
@@ -116,6 +117,8 @@ void init_dir();
 
 void set_alias(char **argv);
 void print_aliases(char **argv);
+void load_aliases(const char *filename);
+void save_aliases(const char *filename);
 
 void dl_init(dlist_head_t *q);
 
@@ -124,6 +127,7 @@ void dl_init(dlist_head_t *q);
  */
 int main(int argc, char **argv)
 {
+    getcwd(aliasesfile, PATH_MAX-9);
 	init_dir(); //initialize working directory
 	char c;
 	char cmdline[MAXLINE];
@@ -162,7 +166,12 @@ int main(int argc, char **argv)
 
 	/* Initialize the job list */
 	initjobs(jobs);
+    
 
+    /* Load aliases file */
+    strcat(aliasesfile,"/.aliases");
+    load_aliases(aliasesfile);
+    
 	/* Execute the shell's read/eval loop */
 	while (1) {
 
@@ -177,6 +186,7 @@ int main(int argc, char **argv)
 			app_error("fgets error");
 		if (feof(stdin)) { /* End of file (ctrl-d) */
 			fflush(stdout);
+            save_aliases(aliasesfile);
 			exit(0);
 		}
 
@@ -244,6 +254,7 @@ void* dl_pop(dlist_head_t *q){
     (q->size)--;
     return retval;
 }
+
 void* dl_peek(dlist_head_t *q){
     dlist_obj_t *dq_obj;
     void *retval;
@@ -275,6 +286,7 @@ void* dl_remove(dlist_head_t *q, dlist_obj_t *ob){
     }
     data = ob->payload;
     free(ob);
+    (q->size)--;
     return data;
 }
 
@@ -396,6 +408,21 @@ int resolve_path(char *cmd){
     }
     return -1;
 }
+/* resolve_alias - tests if the command matches a defined alias and if so,
+ * replaces the command with the contents of the alias.
+ */
+void resolve_alias(char *cmd){
+    alias_t *al;
+    if(cmd[strlen(cmd)-1] == '\n')
+	    cmd[strlen(cmd)-1] = '\0';  /* replace trailing '\n' with null */
+    al = dl_find_alias(&alias_list, cmd);
+    if(al != NULL){
+        strncpy(cmd,al->alias_dest, MAXLINE-1);
+    }
+}
+
+
+
 /*
  * eval - Evaluate the command line that the user has just typed in
  *
@@ -418,7 +445,15 @@ void eval(char *cmdline)
     char *saveptr_s;
     char cmdcpy[MAXLINE];
     char fqpath[PATH_MAX];
+    /* check for the alias command first */
+    parseline(cmdline,argv);
+    if(strcmp(argv[0],"alias")==0){
+        set_alias(argv);
+        return;
+    }
+    /* otherwise do alias substitutions and handle as normal */
     strncpy(cmdcpy,cmdline,MAXLINE-1);
+    resolve_alias(cmdcpy);
     tok_s = strtok_r(cmdcpy, ";&", &saveptr_s);
     while(tok_s != NULL){
         if(cmdline[tok_s-cmdcpy+strlen(tok_s)] == '&')
@@ -431,6 +466,7 @@ void eval(char *cmdline)
         sigemptyset (&mask);
         sigaddset (&mask, SIGCHLD);
         if(strcmp(argv[0],"exit")==0){
+            save_aliases(aliasesfile);
             exit(0);
         }
         else if(strcmp(argv[0],"bg")==0 || strcmp(argv[0],"fg")==0){
@@ -438,9 +474,6 @@ void eval(char *cmdline)
         }
         else if(strcmp(argv[0],"aliases")==0){
             print_aliases(argv);
-        }
-        else if(strcmp(argv[0],"alias")==0){
-            set_alias(argv);
         }
         else if(strcmp(argv[0],"cd")==0){
             do_cd(argv);
@@ -636,7 +669,7 @@ void set_alias(char **argv)
     strncpy(nualias->alias_src, argv[1], MAXLINE-1);
     strncpy(nualias->alias_dest, argv[2], MAXLINE-1);
     dl_push(&alias_list, nualias);
-    printf("\nAlias %s -> ""%s""\n", nualias->alias_src, nualias->alias_dest);
+    printf("\nAlias #%d %s -> ""%s""\n",alias_list.size, nualias->alias_src, nualias->alias_dest);
     return;
 }
 
@@ -650,6 +683,54 @@ void print_aliases(char **argv){
         curobj=curobj->next;
     }
 }
+
+void save_aliases(const char *filename){
+    dlist_obj_t *curobj = alias_list.head;
+    alias_t * al;
+    printf("\nSaving aliases to %s\n",filename);
+	FILE *fp = fopen(filename,"w");
+    if(fp == NULL){
+        perror("unable to save aliases file");
+        return;
+    }
+    while(curobj != NULL){
+        assert(curobj->payload != NULL);
+        al = (alias_t *)curobj->payload;
+        fprintf(fp,"%s\x01%s\n",al->alias_src, al->alias_dest);
+        curobj=curobj->next;
+    }
+    fclose(fp);
+}
+
+void load_aliases(const char *filename){
+    alias_t * al;
+    char alias_str[MAXLINE];
+    char *alias_strp = alias_str;
+    char *asrc;
+	FILE *fp = fopen(filename,"r");
+    if(fp == NULL){
+        return;
+    }
+    while(fgets(alias_str, MAXLINE, fp) != NULL){
+        asrc = strsep(&(alias_strp), "\x01");
+        al = malloc(sizeof(alias_t));
+        if(al == NULL || alias_strp == NULL){
+            printf("Error adding aliases from aliases file\n");
+            return;
+        }
+        if(alias_strp[strlen(alias_strp)-1] == '\n')
+	        alias_strp[strlen(alias_strp)-1] = '\0';  /* replace trailing '\n' with null */
+
+        strncpy(al->alias_src, asrc, MAXLINE-1);
+        strncpy(al->alias_dest, alias_strp, MAXLINE-1);
+        if(dl_push(&alias_list, al) < 0){
+            printf("Failed to add aliases to alias list\n");
+            return;
+        }
+    }   
+    fclose(fp);
+}
+
 /*
  * waitfg - Block until process pid is no longer the foreground process
  */
@@ -721,8 +802,10 @@ void sigint_handler(int sig)
 		kill(-fgp,sig);
 	} else {
         strikes++;
-        if(strikes==2)
+        if(strikes==2){
+            save_aliases(aliasesfile);
             exit(0);
+        }
         printf("\nAre you sure? CTRL-C again to quit.\n");
     }
 	sigprocmask(SIG_UNBLOCK,&mask,NULL);
@@ -994,5 +1077,6 @@ handler_t *Signal(int signum, handler_t *handler)
 void sigquit_handler(int sig)
 {
 	printf("Terminating after receipt of SIGQUIT signal\n");
-	exit(1);
+	save_aliases(aliasesfile);
+    exit(1);
 }
