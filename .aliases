@@ -1,1 +1,2 @@
-sleeptwosleep 2 ; sleep 5
+listls -al
+twosleepsleep 1 ; sleep 1

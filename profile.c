@@ -38,7 +38,7 @@ void init_dir()
 
 		if(chdir(path) == -1)
 		{
-			perror(".profile");
+			perror("Error while interpreting .profile");
 		}
 	}
 	/* DEBUG
