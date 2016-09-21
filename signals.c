@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "jobs.h"
 #include "signals.h"
+#include "sys/wait.h"
 #include "alias.h"
 #include "util.h"
 /*****************
