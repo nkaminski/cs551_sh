@@ -208,6 +208,7 @@ void load_aliases(const char *filename){
         return;
     }
     while(fgets(alias_str, MAXLINE, fp) != NULL){
+        alias_strp = alias_str;
         asrc = strsep(&(alias_strp), "\x01");
         al = malloc(sizeof(alias_t));
         if(al == NULL || alias_strp == NULL){
