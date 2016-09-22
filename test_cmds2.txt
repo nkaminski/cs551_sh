@@ -1,24 +1,33 @@
-/usr > / > total 53
-drwxrwxr-x+ 61 root  admin  2074 Sep 19 22:18 Applications
-drwxr-xr-x+ 66 root  wheel  2244 Jun 13 16:46 Library
-drwxr-xr-x@  2 root  wheel    68 May 12 16:10 Network
-drwxr-xr-x@  4 root  wheel   136 Sep  8 01:27 System
-lrwxr-xr-x   1 root  wheel    49 Jul 25  2012 User Information -> /Library/Documentation/User Information.localized
-drwxr-xr-x   6 root  admin   204 May 12 16:10 Users
-drwxrwxrwt@  5 root  admin   170 Sep 21 02:49 Volumes
-drwxr-xr-x@ 39 root  wheel  1326 Sep  7 02:00 bin
-drwxrwxr-t@  2 root  admin    68 May 12 16:10 cores
-dr-xr-xr-x   3 root  wheel  4229 Sep 21 02:38 dev
-lrwxr-xr-x@  1 root  wheel    11 May 12 16:09 etc -> private/etc
-dr-xr-xr-x   2 root  wheel     1 Sep 21 02:38 home
--rw-r--r--@  1 root  wheel   313 Jul 31  2015 installer.failurerequests
-dr-xr-xr-x   2 root  wheel     1 Sep 21 02:38 net
-drwxr-xr-x@  2 root  wheel    68 Sep  1 00:32 opt
-drwxr-xr-x@  6 root  wheel   204 May 12 16:10 private
-drwxr-xr-x@ 59 root  wheel  2006 Sep  7 02:00 sbin
-lrwxr-xr-x@  1 root  wheel    11 May 12 16:09 tmp -> private/tmp
-drwxr-xr-x@ 12 root  wheel   408 Aug 31 18:10 usr
-lrwxr-xr-x@  1 root  wheel    11 May 12 16:09 var -> private/var
+/usr > / > .
+..
+.DS_Store
+.DocumentRevisions-V100
+.Spotlight-V100
+.Trashes
+.dbfseventsd
+.file
+.fseventsd
+.vol
+Applications
+Library
+Network
+System
+User Information
+Users
+Volumes
+bin
+cores
+dev
+etc
+home
+installer.failurerequests
+net
+opt
+private
+sbin
+tmp
+usr
+var
 / > /
 / > 
 Saving aliases to /Users/cuda017/cs551_sh/.aliases
