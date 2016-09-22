@@ -5,15 +5,25 @@
 echo ---Testing Shell Functionality---
 echo -n .PROFILE execution...
 ./tsh < test_profile.txt | grep -q '/usr >'
+if [ $? -eq 0]
+	echo Success
+else 
+	echo Failure
+fi
+
 #PERROR does not redirect with pipes?? still prints to screen
 # -> -> Nash: perror() prints to stderr, use '2>&1' to redirect stderr to
 # stdout
-echo Success
 
 echo -n Invalid .PROFILE PATH...
 mv ./.profile ./.profiletemp
 mv ./.profiletest ./.profile
-./tsh 2>&1 | grep -q 'Error while interpreting .profile' < test_profile.txt 
+./tsh 2>&1 | grep -q 'Error while interpreting .profile' < test_profile.txt
+if [ $? -eq 0]
+	echo Success
+else 
+	echo Failure
+fi
 mv ./.profile ./.profiletest
 mv ./.profiletemp ./.profile
 echo Success
@@ -30,6 +40,7 @@ then
 else 
 	echo "Success"
 fi
+#How to implement if
 #Need to check are you sure?
 echo -n Exiting with ctrl-c...
 ./tsh &
@@ -48,7 +59,11 @@ echo Success
 
 echo -n Alias invalid input...
 ./tsh < test_alias5.txt | grep -q 'alias command requires'
-echo Success
+if [ $? -eq 0]
+	echo Success
+else 
+	echo Failure
+fi
 
 #Add cmds in /bin and /usr/bin within MINIX
 echo -n Executing commands in PATH...
@@ -59,9 +74,18 @@ echo -n Executing commands in PATH...
 #ps >> "$dir/test.txt"
 #cd $dir
 ./tsh < test_cmds.txt | diff - test_cmds2.txt
-echo Success
+if [ $? -eq 0]
+	echo Success
+else 
+	echo Failure
+fi
 
 #How do you get 'command not found'?
 echo -n Command invalid...
 ./tsh <  test_invalidcmd.txt | grep -q 'does not exist'
+if [ $? -eq 0]
+	echo Success
+else 
+	echo Failure
+fi
 echo Success
