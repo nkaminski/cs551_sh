@@ -12,6 +12,7 @@
 #include "builtins.h"
 #include "jobs.h"
 #include "alias.h"
+#include "parens.h"
 #include "signals.h"
 #include "profile.h"
 
@@ -111,10 +112,12 @@ int main(int argc, char **argv)
 		}
 
 		/* Evaluate the command line */
-		eval(cmdline);
+		if(parseparenthesis(cmdline,eval) == -1){
+            printf("Error: Unbalanced parenthesis");
+        } else {
         /* reset control-c counter */
-        strikes=0;
-		fflush(stdout);
+            strikes=0;
+        }
 		fflush(stdout);
 	}
 
@@ -152,8 +155,24 @@ void eval(char *cmdline)
         return;
     }
     /* otherwise do alias substitutions and handle as normal */
+    /* leading or trailing space removal */
+    while(cmdline[0] != '\0' && cmdline[0] == ' '){
+        memmove(cmdline, cmdline+1, strlen(cmdline));
+    }
+    while(cmdline[0] != '\0' && cmdline[strlen(cmdline)-1] == ' '){
+        cmdline[strlen(cmdline)-1] = '\0';
+    }
+    /* leading or trailing comma removal */
+    while(cmdline[0] != '\0' && cmdline[0] == ','){
+        memmove(cmdline, cmdline+1, strlen(cmdline));
+    }
+    while(cmdline[0] != '\0' && cmdline[strlen(cmdline)-1] == ','){
+        cmdline[strlen(cmdline)-1] = '\0';
+    }
+ 
+    /* alias resolution */
+    resolve_alias(cmdline);
     strncpy(cmdcpy,cmdline,MAXLINE-1);
-    resolve_alias(cmdcpy);
     tok_s = strtok_r(cmdcpy, ";&,", &saveptr_s);
     while(tok_s != NULL){
         if(cmdline[tok_s-cmdcpy+strlen(tok_s)] == '&')
@@ -212,8 +231,10 @@ void eval(char *cmdline)
             }
             sigprocmask(SIG_UNBLOCK,&mask,NULL);
         }
+        //printf("nowait %d\n",nowait);
 jobwait:
         while((pid=fgpid(jobs)) && (nowait == 0)){
+            //printf("waiting %i\n",pid);
             waitfg(pid);
         }
         tok_s = strtok_r(NULL,";&,",&saveptr_s);

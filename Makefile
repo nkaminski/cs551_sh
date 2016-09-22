@@ -22,7 +22,7 @@ LFLAGS =
 LIBS = 
 
 # C source files
-SRCS = main.c alias.c builtins.c jobs.c profile.c signals.c util.c
+SRCS = main.c alias.c builtins.c jobs.c profile.c parens.c signals.c util.c
 
 # C object files 
 #
