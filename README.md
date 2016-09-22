@@ -6,7 +6,7 @@
 * fork / exec - 100%
 * PROFILE execution - 100%
 * Aliases 100%
-* Command parsing - 75% (all except parenthesis)
+* Command parsing - 100%
 * PATH walking - 100%
 * Getting and setting woking directory - 100%
 * Signal handlers - 100%
