@@ -22,8 +22,8 @@ LFLAGS =
 LIBS = 
 
 # C source files
-SRCS = main.c alias.c builtins.c jobs.c profile.c signals.c util.c
 TESTS = test_exit test_print1 test_print2 test_print3
+SRCS = main.c alias.c builtins.c jobs.c profile.c parens.c signals.c util.c
 
 # C object files 
 #
