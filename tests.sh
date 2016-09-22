@@ -64,6 +64,7 @@ then
 else 
 	echo Failure
 fi
+rm test.txt
 #Test Aliases 
 echo -n Alias creation \& execution... 
 ./tsh < test_alias.txt > /dev/null 
@@ -84,12 +85,6 @@ fi
 
 #Add cmds in /bin and /usr/bin within MINIX
 echo -n Executing commands in PATH...
-#dir=$(pwd)
-#cd /
-#ls -l >> "$dir/test.txt"
-#pwd >> "$dir/test.txt"
-#ps >> "$dir/test.txt"
-#cd $dir
 ./tsh < test_cmds.txt | diff - test_cmds2.txt
 if [ $? -eq 0 ]
 then
@@ -98,9 +93,29 @@ else
 	echo Failure
 fi
 
+echo -n Command in specified directory...
+./tsh < test_cmds3.txt > test.txt
+./tsh < test_cmds4.txt | diff - test.txt
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+fi
+rm test.txt
+
 #How do you get 'command not found'?
-echo -n Command invalid...
+echo -n Command not on path...
 ./tsh <  test_invalidcmd.txt | grep -q 'does not exist'
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+fi
+
+echo -n Command not in specified directory...
+./tsh < test_invalidpath.txt | grep -q 'Command not found'
 if [ $? -eq 0 ]
 then
 	echo Success
