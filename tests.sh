@@ -5,17 +5,32 @@
 echo ---Testing Shell Functionality---
 echo -n .PROFILE execution...
 ./tsh < test_profile.txt | grep -q '/usr >'
+if [ $? -eq 0 ] 
+then
+	echo Success
+else
+	echo Failure
+fi
+
 #PERROR does not redirect with pipes?? still prints to screen
-# -> -> Nash: perror() prints to stderr, use '2>&1' to redirect stderr to stdout  
+# -> -> Nash: perror() prints to stderr, use '2>&1' to redirect stderr to
+# stdout
+
+echo -n Invalid .PROFILE PATH...
 mv ./.profile ./.profiletemp
 mv ./.profiletest ./.profile
-./tsh 2>&1 | grep -q 'Error while interpreting .profile' < test_profile.txt 
-mv ./.profile ./.profilettest
+./tsh 2>&1 | grep -q 'Error while interpreting .profile' < test_profile.txt
+if [ $? -eq 0 ] 
+then
+	echo Success
+else 
+	echo Failure
+fi
+mv ./.profile ./.profiletest
 mv ./.profiletemp ./.profile
-echo Success
 
 #Proved in previous test case
-echo Printing current directory...
+echo -n Printing current directory...
 echo Success
 
 echo -n Exiting with exit...
@@ -26,13 +41,29 @@ then
 else 
 	echo "Success"
 fi
+#How to implement if
 #Need to check are you sure?
 echo -n Exiting with ctrl-c...
 ./tsh &
 PID=$!
 kill -INT $PID 
-echo Success
+kill -INT $PID
+if pgrep "tsh" > /dev/null
+then 
+	echo Failure
+else
+	echo Success
+fi
 
+echo -n Exit with ctrl-c confirmation...
+./test_exit > test.txt
+grep 'Are you sure?' test.txt  > /dev/null
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+fi
 #Test Aliases 
 echo -n Alias creation \& execution... 
 ./tsh < test_alias.txt > /dev/null 
@@ -44,7 +75,12 @@ echo Success
 
 echo -n Alias invalid input...
 ./tsh < test_alias5.txt | grep -q 'alias command requires'
-echo Success
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+fi
 
 #Add cmds in /bin and /usr/bin within MINIX
 echo -n Executing commands in PATH...
@@ -55,9 +91,19 @@ echo -n Executing commands in PATH...
 #ps >> "$dir/test.txt"
 #cd $dir
 ./tsh < test_cmds.txt | diff - test_cmds2.txt
-echo Success
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+fi
 
 #How do you get 'command not found'?
 echo -n Command invalid...
 ./tsh <  test_invalidcmd.txt | grep -q 'does not exist'
-echo Success
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+fi
