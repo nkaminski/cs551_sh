@@ -5,9 +5,10 @@
 echo ---Testing Shell Functionality---
 echo -n .PROFILE execution...
 ./tsh < test_profile.txt | grep -q '/usr >'
-if [ $? -eq 0]
+if [ $? -eq 0 ] 
+then
 	echo Success
-else 
+else
 	echo Failure
 fi
 
@@ -19,14 +20,14 @@ echo -n Invalid .PROFILE PATH...
 mv ./.profile ./.profiletemp
 mv ./.profiletest ./.profile
 ./tsh 2>&1 | grep -q 'Error while interpreting .profile' < test_profile.txt
-if [ $? -eq 0]
+if [ $? -eq 0 ] 
+then
 	echo Success
 else 
 	echo Failure
 fi
 mv ./.profile ./.profiletest
 mv ./.profiletemp ./.profile
-echo Success
 
 #Proved in previous test case
 echo -n Printing current directory...
@@ -46,7 +47,13 @@ echo -n Exiting with ctrl-c...
 ./tsh &
 PID=$!
 kill -INT $PID 
-echo Success
+kill -INT $PID
+if pgrep "tsh" > /dev/null
+then 
+	echo Failure
+else
+	echo Success
+fi
 
 #Test Aliases 
 echo -n Alias creation \& execution... 
@@ -59,7 +66,8 @@ echo Success
 
 echo -n Alias invalid input...
 ./tsh < test_alias5.txt | grep -q 'alias command requires'
-if [ $? -eq 0]
+if [ $? -eq 0 ]
+then
 	echo Success
 else 
 	echo Failure
@@ -74,7 +82,8 @@ echo -n Executing commands in PATH...
 #ps >> "$dir/test.txt"
 #cd $dir
 ./tsh < test_cmds.txt | diff - test_cmds2.txt
-if [ $? -eq 0]
+if [ $? -eq 0 ]
+then
 	echo Success
 else 
 	echo Failure
@@ -83,7 +92,8 @@ fi
 #How do you get 'command not found'?
 echo -n Command invalid...
 ./tsh <  test_invalidcmd.txt | grep -q 'does not exist'
-if [ $? -eq 0]
+if [ $? -eq 0 ]
+then
 	echo Success
 else 
 	echo Failure
