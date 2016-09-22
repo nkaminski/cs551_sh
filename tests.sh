@@ -55,6 +55,15 @@ else
 	echo Success
 fi
 
+echo -n Exit with ctrl-c confirmation...
+./test_exit > test.txt
+grep 'Are you sure?' test.txt  > /dev/null
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+fi
 #Test Aliases 
 echo -n Alias creation \& execution... 
 ./tsh < test_alias.txt > /dev/null 
@@ -98,4 +107,3 @@ then
 else 
 	echo Failure
 fi
-echo Success

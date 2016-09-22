@@ -49,6 +49,7 @@ all:    $(MAIN)
 	@echo  Build complete
 
 tests: $(MAIN)
+	@gcc -Wall test_exit.c -o test_exit
 	@./tests.sh
 
 $(MAIN): $(OBJS) 
