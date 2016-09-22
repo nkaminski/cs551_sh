@@ -2,7 +2,7 @@
 
 ## State of functionality
 
-* Testcases - 0%
+* Testcases - 50%
 * fork / exec - 100%
 * PROFILE execution - 100%
 * Aliases 100%
@@ -23,6 +23,8 @@
 * sdriver.pl	# The trace-driven shell driver
 * trace*.txt	# The 15 trace files that control the shell driver
 * tshref.out 	# Example output of the reference shell on all 15 traces
+* tests.sh
+* test_*.txt
 
 ## Little C programs that are called by the trace files
 * myspin.c	# Takes argument <n> and spins for <n> seconds
