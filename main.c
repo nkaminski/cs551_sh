@@ -39,6 +39,7 @@ struct job_t jobs[MAXJOBS]; /* The job list */
 /* Function prototypes */
 
 void eval(char *cmdline);
+void eval2(char *cmdline);
 int parseline(const char *cmdline, char **argv);
 void usage(void);
 void unix_error(char *msg);
@@ -112,12 +113,9 @@ int main(int argc, char **argv)
 		}
 
 		/* Evaluate the command line */
-		if(parseparenthesis(cmdline,eval) == -1){
-            printf("Error: Unbalanced parenthesis");
-        } else {
+        eval(cmdline);
         /* reset control-c counter */
             strikes=0;
-        }
 		fflush(stdout);
 	}
 
@@ -134,18 +132,8 @@ int main(int argc, char **argv)
  * background children don't receive SIGINT (SIGTSTP) from the kernel
  * when we type ctrl-c (ctrl-z) at the keyboard.
  */
-void eval(char *cmdline)
-{
-	int jt;
-	pid_t pid;
-	struct job_t *job;
+void eval(char *cmdline){
 	char *argv[MAXARGS];
-	sigset_t mask;
-    char *tok_s;
-    char *saveptr_s;
-    char cmdcpy[MAXLINE];
-    char fqpath[PATH_MAX];
-    int nowait;
     /* check for the alias command first */
     parseline(cmdline,argv);
     if(argv[0] == NULL)
@@ -155,32 +143,52 @@ void eval(char *cmdline)
         return;
     }
     /* otherwise do alias substitutions and handle as normal */
-    /* leading or trailing space removal */
-    while(cmdline[0] != '\0' && cmdline[0] == ' '){
-        memmove(cmdline, cmdline+1, strlen(cmdline));
-    }
-    while(cmdline[0] != '\0' && cmdline[strlen(cmdline)-1] == ' '){
-        cmdline[strlen(cmdline)-1] = '\0';
-    }
-    /* leading or trailing comma removal */
-    while(cmdline[0] != '\0' && cmdline[0] == ','){
-        memmove(cmdline, cmdline+1, strlen(cmdline));
-    }
-    while(cmdline[0] != '\0' && cmdline[strlen(cmdline)-1] == ','){
-        cmdline[strlen(cmdline)-1] = '\0';
-    }
- 
     /* alias resolution */
     resolve_alias(cmdline);
-    strncpy(cmdcpy,cmdline,MAXLINE-1);
+	if(parseparenthesis(cmdline,eval2) == -1){
+        printf("Error: Unbalanced parenthesis");
+    } 
+}
+void eval2(char *cmdline)
+{
+	int jt;
+	pid_t pid;
+	struct job_t *job;
+	char *argv[MAXARGS];
+	sigset_t mask;
+    char *tok_s;
+    char *saveptr_s;
+    char cmdcpy[MAXLINE];
+    char cmdcpy2[MAXLINE];
+    char fqpath[PATH_MAX];
+    int nowait;
+    strcpy(cmdcpy2,cmdline);
+   /* leading or trailing space removal */
+    while(cmdcpy2[0] != '\0' && cmdcpy2[0] == ' '){
+        memmove(cmdcpy2, cmdcpy2+1, strlen(cmdcpy2));
+    }
+    while(cmdcpy2[0] != '\0' && cmdcpy2[strlen(cmdcpy2)-1] == ' '){
+        cmdcpy2[strlen(cmdcpy2)-1] = '\0';
+    }
+    /* leading or trailing comma removal */
+    while(cmdcpy2[0] != '\0' && cmdcpy2[0] == ','){
+        memmove(cmdcpy2, cmdcpy2+1, strlen(cmdcpy2));
+    }
+    while(cmdcpy2[0] != '\0' && cmdcpy2[strlen(cmdcpy2)-1] == ','){
+        cmdcpy2[strlen(cmdcpy2)-1] = '\0';
+    }
+    /* alias resolution */
+    resolve_alias(cmdcpy2);
+
+    strncpy(cmdcpy,cmdcpy2,MAXLINE-1);
     tok_s = strtok_r(cmdcpy, ";&,", &saveptr_s);
     while(tok_s != NULL){
-        if(cmdline[tok_s-cmdcpy+strlen(tok_s)] == '&')
+        if(cmdcpy2[tok_s-cmdcpy+strlen(tok_s)] == '&')
             jt=1;
         else
             jt=0;
         /* do we intend to run multiple foreground jobs? */
-        if(cmdline[tok_s-cmdcpy+strlen(tok_s)] == ',')
+        if(cmdcpy2[tok_s-cmdcpy+strlen(tok_s)] == ',')
             nowait=1;
         else
             nowait=0;

@@ -1,2 +1,3 @@
-listls -al
+parens(ls,(sleep 2))
 twosleepsleep 1; sleep 1
+listls -al
