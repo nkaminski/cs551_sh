@@ -22,6 +22,7 @@ LFLAGS =
 LIBS = 
 
 # C source files
+TESTS = test_exit test_print1 test_print2 test_print3
 SRCS = main.c alias.c builtins.c jobs.c profile.c parens.c signals.c util.c
 
 # C object files 
@@ -48,8 +49,7 @@ MAIN = tsh
 all:    $(MAIN)
 	@echo  Build complete
 
-tests: $(MAIN)
-	@gcc -Wall test_exit.c -o test_exit
+tests: $(TESTS)
 	@./tests.sh
 
 $(MAIN): $(OBJS) 
