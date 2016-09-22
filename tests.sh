@@ -19,7 +19,7 @@ fi
 echo -n Invalid .PROFILE PATH...
 mv ./.profile ./.profiletemp
 mv ./.profiletest ./.profile
-./tsh 2>&1 | grep -q 'Error while interpreting .profile' < test_profile.txt
+./tsh < test_profile.txt 2>&1 >/dev/null | grep -q 'Error'
 if [ $? -eq 0 ] 
 then
 	echo Success
