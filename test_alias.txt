@@ -1,0 +1,2 @@
+alias test 'ls -l'
+exit

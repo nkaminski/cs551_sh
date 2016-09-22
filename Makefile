@@ -43,10 +43,13 @@ MAIN = tsh
 # deleting dependencies appended to the file from 'make depend'
 #
 
-.PHONY: depend clean
+.PHONY: depend clean tests
 
 all:    $(MAIN)
 	@echo  Build complete
+
+tests: $(MAIN)
+	@./tests.sh
 
 $(MAIN): $(OBJS) 
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
