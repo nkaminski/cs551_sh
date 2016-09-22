@@ -23,6 +23,7 @@ LIBS =
 
 # C source files
 SRCS = main.c alias.c builtins.c jobs.c profile.c signals.c util.c
+TESTS = test_exit test_print1 test_print2 test_print3
 
 # C object files 
 #
@@ -48,8 +49,7 @@ MAIN = tsh
 all:    $(MAIN)
 	@echo  Build complete
 
-tests: $(MAIN)
-	@gcc -Wall test_exit.c -o test_exit
+tests: $(TESTS)
 	@./tests.sh
 
 $(MAIN): $(OBJS) 
