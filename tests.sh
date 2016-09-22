@@ -6,11 +6,15 @@ echo ---Testing Shell Functionality---
 echo -n .PROFILE execution...
 ./tsh < test_profile.txt | grep -q '/usr >'
 #PERROR does not redirect with pipes?? still prints to screen
-# -> -> Nash: perror() prints to stderr, use '2>&1' to redirect stderr to stdout  
+# -> -> Nash: perror() prints to stderr, use '2>&1' to redirect stderr to
+# stdout
+echo Success
+
+echo -n Invalid .PROFILE PATH...
 mv ./.profile ./.profiletemp
 mv ./.profiletest ./.profile
 ./tsh 2>&1 | grep -q 'Error while interpreting .profile' < test_profile.txt 
-mv ./.profile ./.profilettest
+mv ./.profile ./.profiletest
 mv ./.profiletemp ./.profile
 echo Success
 
