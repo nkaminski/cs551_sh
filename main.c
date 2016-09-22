@@ -143,6 +143,7 @@ void eval(char *cmdline)
     char *saveptr_s;
     char cmdcpy[MAXLINE];
     char fqpath[PATH_MAX];
+    int nowait;
     /* check for the alias command first */
     parseline(cmdline,argv);
     if(strcmp(argv[0],"alias")==0){
@@ -152,12 +153,17 @@ void eval(char *cmdline)
     /* otherwise do alias substitutions and handle as normal */
     strncpy(cmdcpy,cmdline,MAXLINE-1);
     resolve_alias(cmdcpy);
-    tok_s = strtok_r(cmdcpy, ";&", &saveptr_s);
+    tok_s = strtok_r(cmdcpy, ";&,", &saveptr_s);
     while(tok_s != NULL){
         if(cmdline[tok_s-cmdcpy+strlen(tok_s)] == '&')
             jt=1;
         else
             jt=0;
+        /* do we intend to run multiple foreground jobs? */
+        if(cmdline[tok_s-cmdcpy+strlen(tok_s)] == ',')
+            nowait=1;
+        else
+            nowait=0;
         parseline(tok_s,argv);
         if(!argv[0])
             return;
@@ -183,7 +189,7 @@ void eval(char *cmdline)
             strcpy(fqpath, argv[0]);
             if(resolve_path(fqpath)<0){
                 printf("%s does not exist on PATH\n", fqpath);
-                return;
+                goto jobwait;
             }
             //printf("path resolved to %s\n", fqpath);
             sigprocmask(SIG_BLOCK,&mask,NULL);
@@ -205,10 +211,11 @@ void eval(char *cmdline)
             }
             sigprocmask(SIG_UNBLOCK,&mask,NULL);
         }
-        if((pid=fgpid(jobs))){
+jobwait:
+        while((pid=fgpid(jobs)) && (nowait == 0)){
             waitfg(pid);
         }
-        tok_s = strtok_r(NULL,";&",&saveptr_s);
+        tok_s = strtok_r(NULL,";&,",&saveptr_s);
     }
 }
 
