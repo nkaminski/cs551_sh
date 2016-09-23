@@ -1,2 +1,3 @@
-./testprint1,./testprint2,./testprint3
-quit
+./myspin 5,./myspin 4,./myspin 3
+sleep 5
+exit

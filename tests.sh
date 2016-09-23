@@ -1,7 +1,8 @@
+#!/bin/bash
 #!/usr/pkg/bin/bash
 #set -e
 #pdir=$(pwd)
-nfails = 0
+nfails=0
 
 #Test .PROFILE
 echo ---Testing Shell Functionality---
@@ -148,17 +149,31 @@ fi
 rm ./.profile
 mv ./.profiletemp ./.profile
 
-#echo Parallel operation 1
-#mv ./.profile ./.profiletemp
-#pwd > ./.profile
-#./tsh < test_parens1.txt | grep -q '21' 
-#if [ $? -eq 0 ]
-#then
-#	echo Success
-#else 
-#	echo Failure
-#	let "nfails++'
-#fi
-#rm ./.profile
-#mv ./.profiletemp ./.profile
+echo Parallel operation 1, check 3 functions...
+mv ./.profile ./.profiletemp
+pwd > ./.profile
+./tsh < test_parens1.txt 
+if pgrep "./myspin 5" > /dev/null
+then 
+	echo Success
+else
+	echo Failure
+	let "nfails++"
+fi
+if pgrep "./myspin 4" > /dev/null
+then 
+	echo Success
+else
+	echo Failure
+	let "nfails++"
+fi
+if pgrep "./myspin 3" > /dev/null
+then 
+	echo Success
+else
+	echo Failure
+	let "nfails++"
+fi
+rm ./.profile
+mv ./.profiletemp ./.profile
 echo Failed tests: $nfails 
