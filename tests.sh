@@ -42,7 +42,6 @@ else
 	echo "Success"
 fi
 #How to implement if
-#Need to check are you sure?
 echo -n Exiting with ctrl-c...
 ./tsh &
 PID=$!
