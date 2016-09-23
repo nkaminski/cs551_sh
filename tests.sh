@@ -1,7 +1,7 @@
 #!/usr/pkg/bin/bash
 #set -e
 #pdir=$(pwd)
-nfails = 0;
+nfails = 0
 
 #Test .PROFILE
 echo ---Testing Shell Functionality---
@@ -12,7 +12,7 @@ then
 	echo Success
 else
 	echo Failure
-	let "nfails++";
+	let "nfails++"
 fi
 
 #PERROR does not redirect with pipes?? still prints to screen
@@ -28,7 +28,7 @@ then
 	echo Success
 else 
 	echo Failure
-	let "nfails++";
+	let "nfails++"
 fi
 mv ./.profile ./.profiletest
 mv ./.profiletemp ./.profile
@@ -42,7 +42,7 @@ echo -n Exiting with exit...
 if pgrep "tsh" > /dev/null
 then
 	echo "Failure"
-	let "nfails++";
+	let "nfails++"
 else 
 	echo "Success"
 fi
@@ -55,7 +55,7 @@ kill -INT $PID
 if pgrep "tsh" > /dev/null
 then 
 	echo Failure
-	let "nfails++";
+	let "nfails++"
 else
 	echo Success
 fi
@@ -68,7 +68,7 @@ then
 	echo Success
 else 
 	echo Failure
-	let "nfails++";
+	let "nfails++"
 fi
 rm test.txt
 #Test Aliases 
@@ -87,7 +87,7 @@ then
 	echo Success
 else 
 	echo Failure
-	let "nfails++";
+	let "nfails++"
 fi
 
 #Add cmds in /bin and /usr/bin within MINIX
@@ -98,7 +98,7 @@ then
 	echo Success
 else 
 	echo Failure
-	let "nfails++";
+	let "nfails++"
 fi
 
 echo -n Command in specified directory...
@@ -109,7 +109,7 @@ then
 	echo Success
 else 
 	echo Failure
-	let "nfails++";
+	let "nfails++"
 fi
 rm test.txt
 
@@ -121,7 +121,7 @@ then
 	echo Success
 else 
 	echo Failure
-	let "nfails++";
+	let "nfails++"
 fi
 
 echo -n Command not in specified directory...
@@ -131,7 +131,7 @@ then
 	echo Success
 else 
 	echo Failure
-	let "nfails++";
+	let "nfails++"
 fi
 
 echo -n Sequential operation 1...
@@ -143,7 +143,7 @@ then
 	echo Success
 else 
 	echo Failure
-	let "nfails++";
+	let "nfails++"
 fi
 rm ./.profile
 mv ./.profiletemp ./.profile
@@ -157,6 +157,7 @@ mv ./.profiletemp ./.profile
 #	echo Success
 #else 
 #	echo Failure
+#	let "nfails++'
 #fi
 #rm ./.profile
 #mv ./.profiletemp ./.profile
