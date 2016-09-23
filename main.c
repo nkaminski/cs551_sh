@@ -104,9 +104,9 @@ int main(int argc, char **argv)
 			printf("%s", fullprompt);
 			fflush(stdout);
 		}
-		if ((fgets(cmdline, MAXLINE, stdin) == NULL) && ferror(stdin))
-			continue;
-	//		app_error("fgets error");
+		if ((fgets(cmdline, MAXLINE, stdin) == NULL) && ferror(stdin) && errno != EINTR){
+			app_error("fgets error");
+		}	
 		if (feof(stdin)) { /* End of file (ctrl-d) */
 			fflush(stdout);
             save_aliases(aliasesfile);
@@ -114,9 +114,7 @@ int main(int argc, char **argv)
 		}
 
 		/* Evaluate the command line */
-        eval(cmdline);
-        /* reset control-c counter */
-            strikes=0;
+        	eval(cmdline);
 		fflush(stdout);
 	}
 
@@ -139,6 +137,7 @@ void eval(char *cmdline){
     parseline(cmdline,argv);
     if(argv[0] == NULL)
         return;
+    strikes=0;
     if(strcmp(argv[0],"alias")==0){
         set_alias(argv);
         return;
