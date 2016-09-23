@@ -1,0 +1,2 @@
+./testprint1,./testprint2,./testprint3
+quit
