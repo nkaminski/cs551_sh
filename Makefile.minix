@@ -6,10 +6,10 @@
 #
 
 # C compiler to use
-CC = gcc
+CC = clang 
 
 # compile-time flags
-CFLAGS = -Wall -O0 -g
+CFLAGS = -Wall -O2
 
 # define any directories containing header files other than the default
 #

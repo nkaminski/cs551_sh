@@ -105,7 +105,8 @@ int main(int argc, char **argv)
 			fflush(stdout);
 		}
 		if ((fgets(cmdline, MAXLINE, stdin) == NULL) && ferror(stdin))
-			app_error("fgets error");
+			continue;
+	//		app_error("fgets error");
 		if (feof(stdin)) { /* End of file (ctrl-d) */
 			fflush(stdout);
             save_aliases(aliasesfile);
@@ -222,7 +223,7 @@ void eval2(char *cmdline)
             //printf("path resolved to %s\n", fqpath);
             sigprocmask(SIG_BLOCK,&mask,NULL);
             if((pid = fork())==0){
-                setpgrp();
+                setpgid(0,0);
                 sigprocmask(SIG_UNBLOCK,&mask,NULL);
                 //printf("child\n");
                 execve(fqpath,argv,environ);
