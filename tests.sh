@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/pkg/bin/bash
 #set -e
 
 #Test .PROFILE
