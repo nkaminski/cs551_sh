@@ -1,4 +1,3 @@
 cd /
-ls -a
 pwd
 exit

@@ -1,5 +1,9 @@
-#!/bin/bash
 #!/usr/pkg/bin/bash
+
+function pgrep() {
+    ps aux | grep $1 | grep -v grep
+}
+
 #set -e
 #pdir=$(pwd)
 nfails=0

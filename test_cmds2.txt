@@ -1,33 +1,3 @@
-/usr > / > .
-..
-.DS_Store
-.DocumentRevisions-V100
-.Spotlight-V100
-.Trashes
-.dbfseventsd
-.file
-.fseventsd
-.vol
-Applications
-Library
-Network
-System
-User Information
-Users
-Volumes
-bin
-cores
-dev
-etc
-home
-installer.failurerequests
-net
-opt
-private
-sbin
-tmp
-usr
-var
-/ > /
+/usr > / > /
 / > 
-Saving aliases to /Users/cuda017/cs551_sh/.aliases
+Saving aliases to /root/cs551_sh/.aliases
