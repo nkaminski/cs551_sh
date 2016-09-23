@@ -45,23 +45,25 @@ void parenthesis(char* head,char* tail,void (*peval)(char *))
 //-------------------------------------------------------------------------------------
 int parseparenthesis(char* cmd, void (*peval)(char *))
 {
-	int l=strlen(cmd);
+	int l;
 	int count,i;
 	count=0;
-    int has_parens=0;
+	if(strlen(cmd) >= MAXLINE-3){
+                printf("Command too long!\n");
+                return -1;
+        }
+        strcat(cmd,")");
+        memmove(cmd+1,cmd, strlen(cmd)+1);
+        cmd[0]='(';
+	l=strlen(cmd);
 	for (i=0;i<l;i++)
 	{
 		if (cmd[i]=='('){
-            count++;
-            has_parens=1;
-        }
+        	    count++;
+        	}
 		if (cmd[i]==')') count--;
 		if (count < 0) return -1;
 	}
-    if(has_parens == 0){
-        peval(cmd);
-        return 0;
-    }
 	char *current,*tail;
 	static char *stack[MAXLINE];
 	static int stackpointer=0;

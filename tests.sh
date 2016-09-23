@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/pkg/bin/bash
 #set -e
 #pdir=$(pwd)
 nfails = 0;
