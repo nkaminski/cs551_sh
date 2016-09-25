@@ -41,7 +41,8 @@ mv ./.profiletemp ./.profile
 echo -n Printing current directory...
 echo Success
 echo -n Exiting with exit...
-./tsh < test_profile.txt > /dev/null
+./tsh < test_profile.txt > /dev/null &
+sleep 1
 if pgrep "tsh" > /dev/null
 then
 	echo "Failure"
@@ -122,10 +123,10 @@ else
 	echo Failure
 	let "nfails++"
 fi
-
-echo -n Sequential operation 1...
 mv ./.profile ./.profiletemp
 pwd > ./.profile
+
+echo -n Sequential operation 1...
 ./tsh < test_parens2.txt | grep -q '21' 
 if [ $? -eq 0 ]
 then
@@ -134,12 +135,8 @@ else
 	echo Failure
 	let "nfails++"
 fi
-rm ./.profile
-mv ./.profiletemp ./.profile
 
 echo Parallel operation 1, check 3 functions...
-mv ./.profile ./.profiletemp
-pwd > ./.profile
 ./tsh < test_parens1.txt > /dev/null &
 sleep 1
 if pgrep "myspin 5" > /dev/null

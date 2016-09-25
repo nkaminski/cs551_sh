@@ -1,1 +1,1 @@
-/root/cs551_sh/test_print1,(/root/cs551_sh/test_print2)
+./test_print1,(./test_print2)
