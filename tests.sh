@@ -1,11 +1,11 @@
 #!/usr/pkg/bin/bash
 
 function pgrep() {
-    ps aux | grep $1 | grep -v grep
+    ps aux | grep "$1" | grep -v grep
 }
 
 #set -e
-#pdir=$(pwd)
+pdir=$(pwd)
 nfails=0
 
 #Test .PROFILE
@@ -19,7 +19,6 @@ else
 	echo Failure
 	let "nfails++"
 fi
-
 #PERROR does not redirect with pipes?? still prints to screen
 # -> -> Nash: perror() prints to stderr, use '2>&1' to redirect stderr to
 # stdout
@@ -41,7 +40,6 @@ mv ./.profiletemp ./.profile
 #Proved in previous test case
 echo -n Printing current directory...
 echo Success
-
 echo -n Exiting with exit...
 ./tsh < test_profile.txt > /dev/null
 if pgrep "tsh" > /dev/null
@@ -51,21 +49,8 @@ then
 else 
 	echo "Success"
 fi
-#How to implement if
-echo -n Exiting with ctrl-c...
-./tsh &
-PID=$!
-kill -INT $PID 
-kill -INT $PID
-if pgrep "tsh" > /dev/null
-then 
-	echo Failure
-	let "nfails++"
-else
-	echo Success
-fi
 
-echo -n Exit with ctrl-c confirmation...
+echo -n Exit with ctrl-c and confirmation...
 ./test_exit > test.txt
 grep 'Are you sure?' test.txt  > /dev/null
 if [ $? -eq 0 ]
@@ -95,7 +80,6 @@ else
 	let "nfails++"
 fi
 
-#Add cmds in /bin and /usr/bin within MINIX
 echo -n Executing commands in PATH...
 ./tsh < test_cmds.txt | diff - test_cmds2.txt
 if [ $? -eq 0 ]
@@ -156,22 +140,23 @@ mv ./.profiletemp ./.profile
 echo Parallel operation 1, check 3 functions...
 mv ./.profile ./.profiletemp
 pwd > ./.profile
-./tsh < test_parens1.txt 
-if pgrep "./myspin 5" > /dev/null
+./tsh < test_parens1.txt > /dev/null &
+sleep 1
+if pgrep "myspin 5" > /dev/null
 then 
 	echo Success
 else
 	echo Failure
 	let "nfails++"
 fi
-if pgrep "./myspin 4" > /dev/null
+if pgrep "myspin 4" > /dev/null
 then 
 	echo Success
 else
 	echo Failure
 	let "nfails++"
 fi
-if pgrep "./myspin 3" > /dev/null
+if pgrep "myspin 3" > /dev/null
 then 
 	echo Success
 else

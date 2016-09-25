@@ -24,7 +24,7 @@ void init_dir()
 		fclose(fp);
 		while(*buf != '/' /*&& *buf != '~'*/ && *buf != EOF)
 		{
-			buf++;	
+			buf++;
 		}
 		char *pstart = buf;
 		size_t size = 0;
@@ -33,7 +33,10 @@ void init_dir()
 			buf++;
 			size++;
 		}
+		size++;
 		char *path = malloc(size*sizeof(char));
+		path[size] = '\0';
+		size--;
 		strncpy(path,pstart,size);
 
 		if(chdir(path) == -1)
