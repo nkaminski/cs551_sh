@@ -6,10 +6,13 @@
 #
 
 # C compiler to use
-CC = gcc
+CC = clang 
+
+# rm utility
+RM = /bin/rm
 
 # compile-time flags
-CFLAGS = -Wall -O0 -g
+CFLAGS = -Wall -O2
 
 # define any directories containing header files other than the default
 #
@@ -22,7 +25,7 @@ LFLAGS =
 LIBS = 
 
 # C source files
-TESTS = test_exit test_print1 test_print2 test_print3
+TESTS = test_exit test_print1 test_print2 test_print3 myspin myint mystop
 SRCS = main.c alias.c builtins.c jobs.c profile.c parens.c signals.c util.c
 
 # C object files 
@@ -49,7 +52,7 @@ MAIN = tsh
 all:    $(MAIN)
 	@echo  Build complete
 
-tests: $(TESTS)
+tests: $(MAIN) $(TESTS)
 	@./tests.sh
 
 $(MAIN): $(OBJS) 
@@ -63,7 +66,7 @@ $(MAIN): $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
 
 clean:
-	$(RM) -r *.o *~ *.dSYM $(MAIN)
+	$(RM) -r *.o $(MAIN) $(TESTS)
 
 depend: $(SRCS)
 	makedepend $(INCLUDES) $^
