@@ -6,6 +6,7 @@ test_print3
 myint
 myspin
 mystop
+mysplit
 .DS_Store
 
 # Object files
