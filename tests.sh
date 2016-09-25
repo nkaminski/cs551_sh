@@ -3,6 +3,12 @@
 function pgrep() {
     ps aux | grep "$1" | grep -v grep
 }
+function waitjobs() {
+    for job in `jobs -p`
+do
+    wait $job
+done
+}
 
 #set -e
 pdir=$(pwd)
@@ -136,6 +142,26 @@ else
 	let "nfails++"
 fi
 
+echo -n Sequential operation 2...
+./tsh < test_parens3.txt | grep -q '12' 
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+	let "nfails++"
+fi
+
+echo -n Sequential operation 3...
+./tsh < test_parens4.txt | grep -q '123' 
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+	let "nfails++"
+fi
+
 echo Parallel operation 1, check 3 functions...
 ./tsh < test_parens1.txt > /dev/null &
 sleep 1
@@ -160,6 +186,18 @@ else
 	echo Failure
 	let "nfails++"
 fi
+echo Waiting for jobs to finish...
+waitjobs
+echo -n Mixed parallel/sequential operations...
+./tsh < test_parens5.txt | grep -qE '123|213' 
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+	let "nfails++"
+fi
+
 rm ./.profile
 mv ./.profiletemp ./.profile
 echo Failed tests: $nfails 
