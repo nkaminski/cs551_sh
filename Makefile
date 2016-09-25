@@ -53,6 +53,7 @@ all:    $(MAIN)
 	@echo  Build complete
 
 tests: $(MAIN) $(TESTS)
+	@./minixtest.sh
 	@./tests.sh
 
 $(MAIN): $(OBJS) 

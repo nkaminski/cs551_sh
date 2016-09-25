@@ -1,5 +1,8 @@
 tsh
 test_exit
+test_print1
+test_print2
+test_print3
 myint
 myspin
 mystop
