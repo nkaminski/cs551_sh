@@ -233,7 +233,7 @@ void eval2(char *cmdline)
             if(jt){
                 addjob(jobs, pid, BG, tok_s);
                 job=getjobpid(jobs,pid);
-                printf("[%i] (%i) %s",job->jid,job->pid,job->cmdline);
+                printf("[%i] (%i) %s\n",job->jid,job->pid,job->cmdline);
             } else{
                 addjob(jobs, pid, FG, tok_s);
             }

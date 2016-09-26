@@ -1,0 +1,4 @@
+./myspin 4 &
+./myspin 3 &
+jobs
+exit

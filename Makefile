@@ -25,7 +25,7 @@ LFLAGS =
 LIBS = 
 
 # C source files
-TESTS = test_exit test_print1 test_print2 test_print3 myspin myint mystop
+TESTS = test_exit test_print1 test_print2 test_print3 test_multiint mysplit myspin myint mystop
 SRCS = main.c alias.c builtins.c jobs.c profile.c parens.c signals.c util.c
 
 # C object files 

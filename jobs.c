@@ -171,7 +171,7 @@ int pid2jid(pid_t pid)
 void listjobs(struct job_t *jobs)
 {
 	int i;
-
+	printf("\n");
 	for (i = 0; i < MAXJOBS; i++) {
 		if (jobs[i].pid != 0) {
 			printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
@@ -189,7 +189,7 @@ void listjobs(struct job_t *jobs)
 					printf("listjobs: Internal error: job[%d].state=%d ",
 							i, jobs[i].state);
 			}
-			printf("%s", jobs[i].cmdline);
+			printf("%s\n", jobs[i].cmdline);
 		}
 	}
 }

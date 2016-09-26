@@ -197,7 +197,36 @@ else
 	echo Failure
 	let "nfails++"
 fi
+echo --EXTRA FUNCTIONS--
+echo -n SIGINT to multiple procs running in parallel...
 
+./test_multiint < test_parens1.txt | grep -i "terminated" | wc -l | grep -q 3 
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+	let "nfails++"
+fi
+echo -n Job control...
+
+./tsh < test_jobs1.txt | grep -E '\[1\]|\[2\]' | wc -l | grep -q 4
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+	let "nfails++"
+fi
+echo -n cd command...
+./tsh < test_cd.txt | grep -q  /usr/bin
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+	let "nfails++"
+fi
 rm ./.profile
 mv ./.profiletemp ./.profile
 echo Failed tests: $nfails 

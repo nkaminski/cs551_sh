@@ -62,23 +62,28 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig)
 {
-	pid_t fgp;
+	int killed=0;
+	int i;
 	sigset_t mask;
 	sigemptyset (&mask);
 	sigaddset (&mask, SIGINT);
 	sigprocmask(SIG_BLOCK,&mask,NULL);
-	fgp=fgpid(jobs);
+	for (i = 0; i < MAXJOBS; i++){
+		if (jobs[i].state == FG){
+			kill(-(jobs[i].pid),sig);
+			killed=1;
+		}
+	}
+
 	//printf("int handler fgpid: %i\n",fgp);
-	if(fgp>0){
-		kill(-fgp,sig);
-	} else {
-        strikes++;
-        if(strikes==2){
-            save_aliases(aliasesfile);
-            exit(0);
-        }
-        printf("\nAre you sure? CTRL-C again to quit.\n");
-    }
+	if(killed == 0){ 
+		strikes++;
+		if(strikes==2){
+			save_aliases(aliasesfile);
+			exit(0);
+		}
+		printf("\nAre you sure? CTRL-C again to quit.\n");
+	}
 	sigprocmask(SIG_UNBLOCK,&mask,NULL);
 	return;
 }
@@ -91,8 +96,19 @@ void sigint_handler(int sig)
 void sigtstp_handler(int sig)
 {
 	pid_t fgp;
+	int n_fg = 0;
+	int i;
 	struct job_t *fgj;
 	sigset_t mask;
+	for (i = 0; i < MAXJOBS; i++){
+		if (jobs[i].state == FG){
+			n_fg++;
+		}
+	}
+	if(n_fg > 1){
+		printf("\nSending SIGTSTP with multiple foreground jobs is not supported\n");
+		return;
+	}
 	sigemptyset (&mask);
 	sigaddset (&mask, SIGTSTP);
 	sigprocmask(SIG_BLOCK,&mask,NULL);
