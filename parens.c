@@ -58,12 +58,10 @@ int parseparenthesis(char* cmd, void (*peval)(char *))
 	l=strlen(cmd);
 	for (i=0;i<l;i++)
 	{
-		if (cmd[i]=='('){
-        	    count++;
-        	}
+		if (cmd[i]=='(') count++;
 		if (cmd[i]==')') count--;
-		if (count < 0) return -1;
 	}
+	if (count != 0) return -1;
 	char *current,*tail;
 	static char *stack[MAXLINE];
 	static int stackpointer=0;

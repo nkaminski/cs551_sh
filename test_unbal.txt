@@ -1,0 +1,2 @@
+(./myspin 5,./myspin 4,(./myspin 3)
+exit

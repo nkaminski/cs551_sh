@@ -156,6 +156,10 @@ void set_alias(char **argv)
     // ! removes the alias
     if(argv[2][0] == '!')
         return;
+    if(strcmp(argv[1],"alias") == 0){
+	printf("\nThe name \'alias\' is reserved and cannot be used as an alias name\n");
+	return;
+ }
     //Allocate and populate
     nualias = malloc(sizeof(alias_t));
     if(nualias == NULL){

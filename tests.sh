@@ -73,9 +73,23 @@ echo -n Alias creation \& execution...
 ./tsh < test_alias.txt > /dev/null 
 ./tsh < test_alias2.txt > test.txt
 ./tsh < test_alias3.txt | diff - test.txt
-./tsh < test_alias4.txt > /dev/null
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+	let "nfails++"
+fi
 rm test.txt
-echo Success
+echo -n Alias deletion...
+./tsh < test_alias4.txt | grep -q test
+if [ $? -eq 0 ]
+then
+	echo Failure
+	let "nfails++"
+else
+	echo Success
+fi
 
 echo -n Alias invalid input...
 ./tsh < test_alias5.txt | grep -q 'alias command requires'
@@ -86,7 +100,15 @@ else
 	echo Failure
 	let "nfails++"
 fi
-
+echo -n Alias named alias...
+./tsh < test_alias6.txt | grep -q 'reserved'
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+	let "nfails++"
+fi
 echo -n Executing commands in PATH...
 ./tsh < test_cmds.txt | diff - test_cmds2.txt
 if [ $? -eq 0 ]
@@ -154,6 +176,15 @@ fi
 
 echo -n Sequential operation 3...
 ./tsh < test_parens4.txt | grep -q '123' 
+if [ $? -eq 0 ]
+then
+	echo Success
+else 
+	echo Failure
+	let "nfails++"
+fi
+echo -n Unbalanced parenthesis...
+./tsh < test_unbal.txt | grep -iq 'unbalanced'
 if [ $? -eq 0 ]
 then
 	echo Success
