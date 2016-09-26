@@ -1,9 +1,9 @@
 #CS551 shell
 
 # Running and Testing
-## To build: Run `make` in this directory.
-## To run testcases: Run `make tests` in this directory
-## To run the shell (for normal use): Run `./tsh`
+* To build: Run `make` in this directory.
+* To run testcases: Run `make tests` in this directory
+* To run the shell (for normal use): Run `./tsh`
 
 
 ## State of functionality
